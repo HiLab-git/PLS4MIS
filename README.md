@@ -1,6 +1,9 @@
 # PLS4MIS (Partially Labeled Supervision for Medical Image Segmentation)
 * This project was originally developed for our previous work. Now and future, we are still working on extending it to be more user-friendly and support more approaches to further boost and ease this topic research.
 
+## Code for partially labeled medical image segmentation.
+Some implementations of partially labeled learning methods can be found in this [Link](https://github.com/HiLab-git/PLS4MIS/main/code).
+
 ## Conclusion
 * This repository provides daily-update literature reviews, algorithms' implementation, and some examples of using PyTorch for partially labeled medical image segmentation. The project is under development. Currently, it supports 3D partially labeled image segmentation and includes six widely-used algorithms' implementations.
 
