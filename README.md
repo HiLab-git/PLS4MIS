@@ -19,6 +19,7 @@
 |Date|The First and Last Authors|Title|Code|Reference|
 |---|---|---|---|---|
 |2021-05|G. Shi and SK. Zhou|Marginal loss and exclusion loss for partially supervised multi-organ segmentation|[Code](https://github.com/MIRACLE-Center/Partially-supervised-multi-organ-segmentation)|[MedIA2021](https://www.sciencedirect.com/science/article/pii/S1361841521000256)|
+|2021-03|J. Zhang and C. Shen|DoDNet: Learning To Segment Multi-Organ and Tumors From Multiple Partially Labeled Datasets|[Code](https://github.com/jianpengz/DoDNet)|[CVPR2021](https://openaccess.thecvf.com/content/CVPR2021/html/Zhang_DoDNet_Learning_To_Segment_Multi-Organ_and_Tumors_From_Multiple_Partially_CVPR_2021_paper.html)|
 |2020-11|X. Fang and P. Yan|Multi-Organ Segmentation Over Partially Labeled Datasets With Multi-Scale Feature Abstraction|[Code](https://github.com/DIAL-RPI/PIPO-FAN)|[TMI2020](https://ieeexplore.ieee.org/abstract/document/9112221)|
 
 ---
