@@ -29,5 +29,5 @@ Some implementations of partially labeled learning methods can be found in this 
 
 ## ❓ Questions and Suggestions
 We welcome contributions, suggestions, and collaborations!
-	•	📧 Email: lihe200203@163.com
-	•	💬 QQ Group (Chinese): 906808850
+- 📧 Email: lihe200203@163.com
+- 💬 QQ Group (Chinese): 906808850
