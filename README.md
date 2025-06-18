@@ -18,6 +18,7 @@
 ## 📖 Literature reviews of partially labeled learning approach for medical image segmentation (**PLS4MIS**)
 |Date|The First and Last Authors|Title|Code|Reference|
 |---|---|---|---|---|
+|2024-06|B. Billot and P. Golland|Network conditioning for synergistic learning on partial annotations|[Code](https://github.com/BBillot/CoNeMOS)|[MIDL2024](https://openreview.net/forum?id=sfjgmuvLS7)|
 |2023-09|Y. Xie and C. Shen|Learning From Partially Labeled Data for Multi-Organ and Tumor Segmentation|[Code](https://github.com/jianpengz/DoDNet/tree/main/TransDoD)|[TPAMI2023](https://ieeexplore.ieee.org/abstract/document/10242007)|
 |2023-06|X. Liu and S. Yang|CCQ: Cross-Class Query Network for Partially Labeled Organ Segmentation|[Code](https://github.com/Yang-007/CCQ)|[AAAI2023](https://ojs.aaai.org/index.php/AAAI/article/view/25264)|
 |2022-08|R. Deng and Y. Huo|Omni-Seg: A Single Dynamic Network for Multi-label Renal Pathology Image Segmentation using Partially Labeled Data|[Code](https://github.com/ddrrnn123/Omni-Seg)|[MIDL2022](https://proceedings.mlr.press/v172/deng22a/deng22a.pdf)|
