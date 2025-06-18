@@ -2,7 +2,7 @@
 
 **PLS4MIS** is an open-source toolbox for **partially labeled medical image segmentation**.
 
-This project aims to facilitate research in scenarios where full pixel-wise annotations are expensive or infeasible by providing literature reviews, benchmark implementations, and practical PyTorch code.
+* This project aims to facilitate research in scenarios where full pixel-wise annotations are expensive or infeasible by providing literature reviews, benchmark implementations, and practical PyTorch code.
 
 ---
 
@@ -20,8 +20,12 @@ This project aims to facilitate research in scenarios where full pixel-wise anno
 |---|---|---|---|---|
 |2020-11|X. Fang and P. Yan|Multi-Organ Segmentation Over Partially Labeled Datasets With Multi-Scale Feature Abstraction|[Code](https://github.com/DIAL-RPI/PIPO-FAN)|[TMI2020](https://papers.miccai.org/miccai-2024/154-Paper3485.html](https://ieeexplore.ieee.org/abstract/document/9112221))|
 
+---
+
 ## 🔬 Code for partially labeled medical image segmentation.
 Some implementations of partially labeled learning methods can be found in this [Link](https://github.com/HiLab-git/PLS4MIS/tree/main/code).
+
+---
 
 ## ❓ Questions and Suggestions
 We welcome contributions, suggestions, and collaborations!
