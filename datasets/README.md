@@ -1,1 +1,1 @@
-# 📊Datasets/Challenges for Partially Labeled Medical Image Segmentation
+# 📊 Datasets/Challenges for Partially Labeled Medical Image Segmentation
