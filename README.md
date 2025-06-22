@@ -28,6 +28,7 @@ Some implementations of partially labeled learning methods can be found in this 
 ## 📖 Literature reviews of partially labeled learning approach for medical image segmentation (**PLS4MIS**)
 |Date|The First and Last Authors|Title|Code|Reference|
 |---|---|---|---|---|
+|2025-01|X. Jiang and X. Yang|Labeled-to-unlabeled distribution alignment for partially-supervised multi-organ medical image segmentation|[Code](https://github.com/xjiangmed/LTUDA)|[MedIA2025](https://www.sciencedirect.com/science/article/pii/S1361841524002585)|
 |2024-06|B. Billot and P. Golland|Network conditioning for synergistic learning on partial annotations|[Code](https://github.com/BBillot/CoNeMOS)|[MIDL2024](https://openreview.net/forum?id=sfjgmuvLS7)|
 |2024-05|H. Liu and S. Grbic|COSST: Multi-Organ Segmentation With Partially Labeled Datasets Using Comprehensive Supervisions and Self-Training|None|[TMI2024](https://ieeexplore.ieee.org/abstract/document/10400525)|
 |2023-09|Y. Xie and C. Shen|Learning From Partially Labeled Data for Multi-Organ and Tumor Segmentation|[Code](https://github.com/jianpengz/DoDNet/tree/main/TransDoD)|[TPAMI2023](https://ieeexplore.ieee.org/abstract/document/10242007)|
