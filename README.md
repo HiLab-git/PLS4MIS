@@ -29,6 +29,7 @@ Some implementations of partially labeled learning methods can be found in this 
 |Date|The First and Last Authors|Title|Code|Reference|
 |---|---|---|---|---|
 |2025-10|Z. Zhang and X. Duan|AMOTS: Partially supervised framework for abdominal multi-organ and tumor segmentation via aspect-aware complementary|[Code](https://github.com/zzm3zz/AMOTS)|[AIMed2025](https://www.sciencedirect.com/science/article/pii/S0933365725001599?ref=pdf_download&fr=RR-2&rr=966ba42cac9fcbae)|
+|2025-07|H. Gong and H. Li|Boundary as the Bridge: Toward Heterogeneous Partially-Labeled Medical Image Segmentation and Landmark Detection|[Code](https://github.com/lhaof/HPL)|[TMI2025](https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=10915612)|
 |2025-01|X. Jiang and X. Yang|Labeled-to-unlabeled distribution alignment for partially-supervised multi-organ medical image segmentation|[Code](https://github.com/xjiangmed/LTUDA)|[MedIA2025](https://www.sciencedirect.com/science/article/pii/S1361841524002585)|
 |2024-06|B. Billot and P. Golland|Network conditioning for synergistic learning on partial annotations|[Code](https://github.com/BBillot/CoNeMOS)|[MIDL2024](https://openreview.net/forum?id=sfjgmuvLS7)|
 |2024-02|H. Wang and S. Wan|A multi-objective segmentation method for chest X-rays based on collaborative learning from multiple partially annotated datasets|None|[InfFusion2024](https://www.sciencedirect.com/science/article/pii/S1566253523003329)|
