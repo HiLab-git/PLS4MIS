@@ -6,13 +6,13 @@
 
 * This project was originally developed for our previous works. We are continuing to extend it to be more user-friendly and to support additional approaches that further facilitate research in this area. **If you use this codebase in your research, please cite the following works**:
 
-    @article{li2025pl,
-    title={PL-Seg: Partially labeled abdominal organ segmentation via classwise orthogonal contrastive learning and progressive self-distillation},
-    author={Li, He and Luo, Xiangde and Fu, Jia and Gu, Ran and Liao, Wenjun and Zhang, Shichuan and Li, Kang and Wang, Guotai and Zhang, Shaoting},
-    journal={Medical Image Analysis},
-    pages={103885},
-    year={2025},
-    publisher={Elsevier}}
+        @article{li2025pl,
+        title={PL-Seg: Partially labeled abdominal organ segmentation via classwise orthogonal contrastive learning and progressive self-distillation},
+        author={Li, He and Luo, Xiangde and Fu, Jia and Gu, Ran and Liao, Wenjun and Zhang, Shichuan and Li, Kang and Wang, Guotai and Zhang, Shaoting},
+        journal={Medical Image Analysis},
+        pages={103885},
+        year={2025},
+        publisher={Elsevier}}
 
 ---
 
