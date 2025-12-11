@@ -7,5 +7,3 @@ A list of publicly available, partially labeled medical image segmentation datas
 * We used r ∈ {2∕16, 4∕16, 6∕16} to denote the ratio of labeled classes in a volume and randomly select labels for 16 × r organs in each training volume.
 * More details of this dataset can be found at [this](WORD)
 
----
-
