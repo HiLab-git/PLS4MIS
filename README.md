@@ -57,6 +57,7 @@ Some implementations of partially labeled learning methods can be found in this 
 |2021-03|J. Zhang and C. Shen|DoDNet: Learning To Segment Multi-Organ and Tumors From Multiple Partially Labeled Datasets|[Code](https://github.com/jianpengz/DoDNet)|[CVPR2021](https://openaccess.thecvf.com/content/CVPR2021/html/Zhang_DoDNet_Learning_To_Segment_Multi-Organ_and_Tumors_From_Multiple_Partially_CVPR_2021_paper.html)|
 |2020-11|X. Fang and P. Yan|Multi-Organ Segmentation Over Partially Labeled Datasets With Multi-Scale Feature Abstraction|[Code](https://github.com/DIAL-RPI/PIPO-FAN)|[TMI2020](https://ieeexplore.ieee.org/abstract/document/9112221)|
 |2020-09|R. Huang and H. Li|Multi-organ segmentation via co-training weight-averaged models from few-organ datasets|None|[MICCAI2020](https://link.springer.com/chapter/10.1007/978-3-030-59719-1_15)|
+|2019-11|Y. Zhou and AL. Yuille|Prior-Aware Neural Network for Partially-Supervised Multi-Organ Segmentation|None|[ICCV2019](https://openaccess.thecvf.com/content_ICCV_2019/html/Zhou_Prior-Aware_Neural_Network_for_Partially-Supervised_Multi-Organ_Segmentation_ICCV_2019_paper.html)|
 |2019-06|K. Dmitriev and AE. Kaufman|Learning multi-class segmentations from single-class datasets|None|[CVPR2019](https://openaccess.thecvf.com/content_CVPR_2019/html/Dmitriev_Learning_Multi-Class_Segmentations_From_Single-Class_Datasets_CVPR_2019_paper.html)|
 
 ---
