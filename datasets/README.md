@@ -12,7 +12,7 @@ A list of publicly available, partially labeled medical image segmentation datas
 ### Dataset folder structure
 Now, the processed partially labeled WORD dataset, with class ratios of 2∕16, 4∕16, and 6∕16, is publicly available. It can be downloaded through the following two options:
 1) Download the data from [BaiduDisk (China)](https://pan.baidu.com/s/1wRiQGlArH6KKq2ZB03BMfw), the password is *WDPL*.
-2) Using your Google account to download the data ([Google Driven](https://drive.google.com/drive/folders/1i2xbXxdEYnjNZVUtGZxYdwaeKmNmywnY)).
+2) Using your Google account to download the data ([Google Driven](https://drive.google.com/file/d/1v29xcg7SpQUTRNFcU17PXguMDa9wG9Fo/view?usp=drive_link)).
 
 Datasets must be located in the `/code/datasets` folder. Each segmentation dataset is organized into two separate folders. For example, the WORD dataset includes two folders: *WORD* and *WORD_LeafDice*.
 WORD dataset is stored in the `/code/datasets` folder like this:
