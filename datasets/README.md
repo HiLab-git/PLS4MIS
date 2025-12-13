@@ -9,5 +9,5 @@ A list of publicly available, partially labeled medical image segmentation datas
 
 ### Dataset folder structure
 Now, the processed partially labeled WORD dataset, with class ratios of 2∕16, 4∕16, and 6∕16, is publicly available. It can be downloaded through the following two options:
-1) Download the data from [BaiduDisk (China)](https://pan.baidu.com/s/1d0cFhj3LU029oHajNni8KQ), the password is *WORDPL*.
+1) Download the data from [BaiduDisk (China)](https://pan.baidu.com/s/1wRiQGlArH6KKq2ZB03BMfw), the password is *WDPL*.
 2) Using your Google account to download the data ([Google Driven](https://drive.google.com/drive/folders/1i2xbXxdEYnjNZVUtGZxYdwaeKmNmywnY)).
