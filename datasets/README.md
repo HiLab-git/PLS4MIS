@@ -40,7 +40,7 @@ WORD dataset is stored in the `/code/datasets` folder like this:
     │   ├── labelsVal
     ├── ...
 
-**Remember (!!!):** 
+**Remember (! ! !):** 
 - Folders with the **'_LeafDice'** suffix indicate data preprocessed specifically for the LeafDice method and should **only be used when running LeafDice-related experiments**.
 - 'labelsTr_2', 'labelsTr_4', and 'labelsTr_6' correspond to labeling ratios of 2/16, 4/16, and 6/16, respectively. When conducting experiments with these ratios, **please rename the corresponding folder to 'labelsTr'** so that it can be correctly read by the Dataset function.
 
