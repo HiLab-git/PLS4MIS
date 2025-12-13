@@ -1,6 +1,8 @@
 # 📊 Datasets/Challenges for Partially Labeled Medical Image Segmentation
 A list of publicly available, partially labeled medical image segmentation datasets is included. Pre-processed WORD dataset versions are provided for immediate use in experiments.
 
+---
+
 ## [1. WORD Dataset](WORD)
 * This dataset consists of 150 abdominal Computed Tomography (CT) volumes, divided into 100 volumes for training, 20 for validation, and 30 for testing.
 * Each CT volume contains 159–330 slices of 512 × 512 pixels, with an in-plane resolution of 0.976 mm × 0.976 mm and inter-slice spacing of 2.5-3.0 mm.
@@ -40,4 +42,8 @@ WORD dataset is stored in the `/code/datasets` folder like this:
 
 **Remember:** 
 - Folders with the **'_LeafDice'** suffix indicate data preprocessed specifically for the LeafDice method and should **only be used when running LeafDice-related experiments**.
-- 'labelsTr_2', 'labelsTr_4', and 'labelsTr_6' correspond to labeling ratios of 2/16, 4/16, and 6/16, respectively. When conducting experiments with these ratios, **please rename the corresponding folder to 'labelsTr'** so that it can be correctly read by the Dataset loading function.
+- 'labelsTr_2', 'labelsTr_4', and 'labelsTr_6' correspond to labeling ratios of 2/16, 4/16, and 6/16, respectively. When conducting experiments with these ratios, **please rename the corresponding folder to 'labelsTr'** so that it can be correctly read by the Dataset function.
+
+---
+
+## [2. FLARE2023 Dataset]()
