@@ -1,4 +1,4 @@
-# Partially Labeled Supervision for Medical Image Segmentation (**PLS4MIS**)
+# 🚀 Partially Labeled Supervision for Medical Image Segmentation (**PLS4MIS**)
 
 ## Requirements
 Some important required packages include:
@@ -18,7 +18,7 @@ Follow official guidance to install [Pytorch][torch_link].
 git clone https://github.com/HiLab-git/PLS4MIS.git
 cd PLS4MIS/
 ```
-2. Download the processed dataset and put the data in `/code/datasets` folder. For more detailed data processing information, please refer to [this Link](../datasets)
+2. Download the processed dataset and put the data in `/code/datasets` folder. For more detailed data processing information, please refer to [this](../datasets).
 
 3. Train the model
 ```
