@@ -19,3 +19,19 @@ git clone https://github.com/HiLab-git/PLS4MIS.git
 cd PLS4MIS
 ```
 2. Download the processed dataset and put the data in `/code/datasets` folder. For more detailed data processing information, please refer to [this Link](../datasets)
+
+3. Train the model
+```
+cd code
+
+# Train WORD (Annotation scale: 2/16)
+python -u train_PLSeg.py --exp_dir ./exp/WORD/PLSeg_P2 --data_dir ./datasets/WORD \
+       --workspace ./exp/WORD/PLSeg_P2/checkpoint --gpu 0 --batch_size 4 --patch_size 128 128 96 \
+       --num_classes 17 --epoches 500 --learning_rate 0.01
+
+# Train FLARE2023
+python -u train_PLSeg.py --exp_dir ./exp/FLARE2023/PLSeg --data_dir ./datasets/FLARE2023 \
+       --workspace ./exp/FLARE2023/PLSeg/checkpoint --gpu 1 --batch_size 4 --patch_size 128 128 64 \
+       --num_classes 13 --epoches 600 --learning_rate 0.01
+```
+5. 
