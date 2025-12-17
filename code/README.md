@@ -16,13 +16,13 @@ Follow official guidance to install [Pytorch][torch_link].
 1. Clone the repo:
 ```
 git clone https://github.com/HiLab-git/PLS4MIS.git
-cd PLS4MIS
+cd PLS4MIS/
 ```
 2. Download the processed dataset and put the data in `/code/datasets` folder. For more detailed data processing information, please refer to [this Link](../datasets)
 
 3. Train the model
 ```
-cd code
+cd code/
 
 # Train WORD (Annotation scale: 2/16)
 python -u train_PLSeg.py --exp_dir ./exp/WORD/PLSeg_P2 --data_dir ./datasets/WORD \
@@ -34,4 +34,15 @@ python -u train_PLSeg.py --exp_dir ./exp/FLARE2023/PLSeg --data_dir ./datasets/F
        --workspace ./exp/FLARE2023/PLSeg/checkpoint --gpu 1 --batch_size 4 --patch_size 128 128 64 \
        --num_classes 13 --epoches 600 --learning_rate 0.01
 ```
-5. 
+4. Test the model
+```
+# Test WORD
+python -u test_PLSeg.py --exp_dir ./exp/WORD/PLSeg_P2 --data_dir ./datasets/WORD \
+       --gpu 1 --patch_size 128 128 96 --batch_size 1 --num_classes 17 --stride_xy 64 --stride_z 64
+
+
+# Test FLARE2023
+python -u test_PLSeg.py --exp_dir ./exp/FLARE2023/PLSeg --data_dir ./datasets/FLARE2023 \
+       --gpu 1 --patch_size 128 128 64 --batch_size 1 --num_classes 13 --stride_xy 32 --stride_z 32
+```
+5. For more training information on the other model, please refer to `run.sh`. The original code corresponds to `train_XXXXX.py and test_XXXXX.py`.
