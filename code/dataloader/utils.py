@@ -1,6 +1,8 @@
 import os
 import torch
 import random
+from skimage import measure
+import scipy.ndimage as nd
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,7 +14,6 @@ def untransform(img, lt):
     img = (img + 1) * 127.5
     lt = lt * 128
     return img, lt
-
 
 def recursive_glob(rootdir='.', suffix=''):
     """Performs recursive glob with given suffix and rootdir
@@ -58,7 +59,6 @@ def get_pascal_labels():
                        [0, 64, 0], [128, 64, 0], [0, 192, 0], [128, 192, 0],
                        [0, 64, 128]])
 
-
 def encode_segmap(mask):
     """Encode segmentation label images as pascal classes
     Args:
@@ -74,7 +74,6 @@ def encode_segmap(mask):
         label_mask[np.where(np.all(mask == label, axis=-1))[:2]] = ii
     label_mask = label_mask.astype(int)
     return label_mask
-
 
 def decode_seg_map_sequence(label_masks, dataset='pascal'):
     rgb_masks = []
@@ -147,7 +146,6 @@ def cross_entropy2d(logit, target, ignore_index=255, weight=None, size_average=T
 def lr_poly(base_lr, iter_, max_iter=100, power=0.9):
     return base_lr * ((1 - float(iter_) / max_iter) ** power)
 
-
 def get_iou(pred, gt, n_classes=21):
     total_iou = 0.0
     for i in range(len(pred)):
@@ -201,9 +199,6 @@ def get_mc_dice(pred, gt, num=2):
             total_dice[j-1] +=dice
     return total_dice
 
-from skimage import measure
-import scipy.ndimage as nd
-
 def post_processing(prediction):
     prediction = nd.binary_fill_holes(prediction)
     label_cc, num_cc = measure.label(prediction,return_num=True)
@@ -252,13 +247,11 @@ class TwoStreamBatchSampler(Sampler):
 def iterate_once(iterable):
     return np.random.permutation(iterable)
 
-
 def iterate_eternally(indices):
     def infinite_shuffles():
         while True:
             yield np.random.permutation(indices)
     return itertools.chain.from_iterable(infinite_shuffles())
-
 
 def grouper(iterable, n):
     "Collect data into fixed-length chunks or blocks"

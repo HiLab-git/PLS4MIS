@@ -10,22 +10,10 @@ from glob import glob
 from torch.utils.data import Dataset
 from torchvision import transforms
 
-def random_rot_flip(image, label=None):
-    k = np.random.randint(0, 4)  
-    image = np.rot90(image, k)  
-    axis = np.random.randint(0, 2)  
-    image = np.flip(image, axis=axis).copy()  
-    if label is not None:  
-        label = np.rot90(label, k) 
-        label = np.flip(label, axis=axis).copy() 
-        return image, label
-    else:
-        return image
-
-class Word3D(Dataset):
-    def __init__(self, nii_dir='./dataset/word3d', mode='test', transform=None):
+class AbdomenOrgan(Dataset):
+    def __init__(self, nii_dir='./datasets/WORD', mode='test', transform=None):
         '''
-        :param nii_dir:  Data storage location './data/central_crop_nii/'.
+        :param nii_dir:  Data storage location.
         :param mode:  Mode in train, valid and test.
         '''
         self.nii_dir = nii_dir

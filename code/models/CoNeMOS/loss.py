@@ -3,6 +3,7 @@ import torch.nn.functional as F
 import torch.nn as nn
 import numpy as np
 
+
 class BinaryDiceLoss(nn.Module):
     def __init__(self, smooth=1, p=2, reduction='mean'):
         super(BinaryDiceLoss, self).__init__()

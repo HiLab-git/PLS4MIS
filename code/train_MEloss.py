@@ -15,14 +15,14 @@ from torch import nn
 from torch.nn import DataParallel
 import SimpleITK as sitk
 
-from dataloader.WORD_dataloader3d import Word3D
+from dataloader.Dataloader3d import AbdomenOrgan
 from torchvision.utils import make_grid
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
 from models.unet3d import UNet3D
-from models.MELoss.loss import DC_CE_Marginal_Exclusion_loss, DC_CE_Marginal_loss
+from models.MELoss.loss import DC_CE_Marginal_Value_Exclusion_loss
 from models.weight_init import initialize_weights
-from dataloader import WORD_transforms as tr
+from dataloader import transforms as tr
 from utils.average_meter import AverageMeter
 from utils.evaluation_seg import *
 from utils.losses import *
@@ -43,17 +43,13 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.enabled = True
 torch.set_default_tensor_type('torch.FloatTensor')
 
-CLASS_NAME = ['Liver', 'Spleen', 'Kidney(L)', 'Kidney(R)', 'Stomach', 'Gallbladder', 'Esophagus',
-               'Pancreas', 'Duodenum', 'Colon', 'Intestine', 'Adrenal', 'Rectum', 'Bladder', 'Head of Femur(L)', 'Head of Femur(R)']
-
-
 def parse_args():
     desc = "Pytorch implementation of MELoss"
     parser = argparse.ArgumentParser(description=desc)
     # dir config
-    parser.add_argument('--exp_dir', type=str, default='./exp/MEL')
-    parser.add_argument('--data_dir', type=str, default='./dataset/word3d')
-    parser.add_argument('--workspace', type=str, default='./exp/MEL/checkpoint')
+    parser.add_argument('--exp_dir', type=str, default='./exp/WORD/MEL')
+    parser.add_argument('--data_dir', type=str, default='./datasets/WORD')
+    parser.add_argument('--workspace', type=str, default='./exp/WORD/MEL/checkpoint')
     # GPU config
     parser.add_argument('--gpu', type=str, default='0')
     parser.add_argument('--gpu_grop', type=int, default=[0, 1])
@@ -61,7 +57,13 @@ def parse_args():
     parser.add_argument('--resume', default=None, help='checkpoint path')
     parser.add_argument('--in_channel', type=int, default=1)
     parser.add_argument('--batch_size', type=int, default=4)
-    parser.add_argument('--patch_size', type=list, default=[128, 128, 96])
+    parser.add_argument(
+        "--patch_size",
+        type=int,
+        nargs="+",
+        required=True,
+        help="WORD [128, 128, 96]; FLARE2023[128, 128, 64]"
+    )
     parser.add_argument('--num_classes', type=int, default=17)
     parser.add_argument('--start_epoch', type=int, default=0)
     parser.add_argument('--epoches', type=int, default=500)
@@ -85,15 +87,22 @@ def validate_slice(model, dataloader, args, writer, epoch):
 
             image = Variable(sample['image'].squeeze(dim=0).squeeze(dim=0).cuda())
             target = sample['label'].cuda()
-            
             target = Variable(target)
 
             pred_seg = test_single_case(model, image, stride_xy=args.patch_size[0], stride_z=args.patch_size[2],
                                         patch_size=args.patch_size, num_classes=args.num_classes)
 
             gt_volumn = target.squeeze(dim=0)
-            dice_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
+            
+            if args.num_classes == 17:
+                dice_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
                                                             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], False, 'dice')
+            elif args.num_classes == 13:
+                dice_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
+                                                            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], False, 'dice')
+            else:
+                raise ValueError(f"Unknown dataset")
+            
             val_dice.update(torch.tensor(dice_score))
 
             if (epoch + 1) % (args.print_interval + 19) == 0:
@@ -121,14 +130,14 @@ def validate_slice(model, dataloader, args, writer, epoch):
 
 def train(model, train_loader, val_loader, writer, args):
     # define the criterion
-    me_loss = DC_CE_Marginal_Exclusion_loss()
+    me_loss = DC_CE_Marginal_Value_Exclusion_loss(num_classes=args.num_classes)
 
     # define the optimizer
     optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.99), lr=args.learning_rate)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.95, patience=4, verbose=True,
                                                      min_lr=1e-4)
     
-    best_dice = torch.zeros(17)
+    best_dice = torch.zeros(args.num_classes)
     best_epoch = 1
 
     for epoch in range(args.start_epoch, args.epoches):
@@ -141,14 +150,14 @@ def train(model, train_loader, val_loader, writer, args):
             model.train()
 
             image = sample['image'].cuda()
-            label = sample['onehot_label'].cuda()
+            label = sample['label'].cuda()
             
             seg_pred = model(image)
 
             optimizer.zero_grad()
             
             # Compute dice
-            seg_loss = me_loss(seg_pred, label, CLASS_NAME)
+            seg_loss = me_loss(seg_pred, label)
 
             seg_loss_epoch.update(seg_loss.cpu())
 
@@ -170,28 +179,40 @@ def train(model, train_loader, val_loader, writer, args):
         # validate and visualization
         if not os.path.exists(args.workspace):
             os.mkdir(args.workspace)
-        result_dir = os.path.join(args.workspace, 'val_results')
-        if not os.path.exists(result_dir):
-            os.mkdir(result_dir)
         model_dir = os.path.join(args.workspace, 'models')
         if not os.path.exists(model_dir):
             os.mkdir(model_dir)
+        
         if (epoch + 1) % args.val_interval == 0:
             val_dice = validate_slice(model, val_loader, args, writer, epoch)
-            
             logging.info('\n Epoch[%4d/%4d] --> Valid...' % (epoch + 1, args.epoches))
-            logging.info(
-                '\t [Dice Coef: mean=%.4f, BG=%.4f, Liver=%.4f, Spleen=%.4f, LK=%.4f, RK=%.4f, Stomach=%.4f, Gallb=%.4f, Esopha=%.4f, Pancreas=%.4f, Duode=%.4f, Colon=%.4f, Intes=%.4f, Adrenal=%.4f, Rectum=%.4f, Bladder=%.4f, LH=%.4f, RH=%.4f]' %
-                (torch.mean(val_dice.avg), val_dice.avg[0], val_dice.avg[1], val_dice.avg[2], val_dice.avg[3], val_dice.avg[4], val_dice.avg[5], val_dice.avg[6],
-                 val_dice.avg[7], val_dice.avg[8], val_dice.avg[9], val_dice.avg[10], val_dice.avg[11], val_dice.avg[12], val_dice.avg[13], val_dice.avg[14], val_dice.avg[15], val_dice.avg[16]))
-            writer.add_scalars('Val/Dice',
-                                {'Liver': val_dice.avg[1], 'Spleen': val_dice.avg[2],
-                                'LK': val_dice.avg[3], 'RK': val_dice.avg[4], 'Stomach' :val_dice.avg[5],
-                                'Gallb': val_dice.avg[6], 'Esopha': val_dice.avg[7], 'Pancreas': val_dice.avg[8],
-                                'Duode': val_dice.avg[9], 'Colon': val_dice.avg[10], 'Intes': val_dice.avg[11],
-                                'Adrenal': val_dice.avg[12], 'Rectum': val_dice.avg[13], 'Bladder': val_dice.avg[14],
-                                'LH': val_dice.avg[15], 'ROH': val_dice.avg[16],'BG': val_dice.avg[0],
-                                'mean': torch.mean(val_dice.avg)}, epoch)
+            
+            if args.num_classes == 17:
+                logging.info(
+                    '\t [Dice Coef: mean=%.4f, BG=%.4f, Liver=%.4f, Spleen=%.4f, LK=%.4f, RK=%.4f, Stomach=%.4f, Gallb=%.4f, Esopha=%.4f, Pancreas=%.4f, Duode=%.4f, Colon=%.4f, Intes=%.4f, Adrenal=%.4f, Rectum=%.4f, Bladder=%.4f, LH=%.4f, RH=%.4f]' %
+                    (torch.mean(val_dice.avg), val_dice.avg[0], val_dice.avg[1], val_dice.avg[2], val_dice.avg[3], val_dice.avg[4], val_dice.avg[5], val_dice.avg[6],
+                    val_dice.avg[7], val_dice.avg[8], val_dice.avg[9], val_dice.avg[10], val_dice.avg[11], val_dice.avg[12], val_dice.avg[13], val_dice.avg[14], val_dice.avg[15], val_dice.avg[16]))
+                writer.add_scalars('Val/Dice',
+                                    {'Liver': val_dice.avg[1], 'Spleen': val_dice.avg[2],
+                                    'LK': val_dice.avg[3], 'RK': val_dice.avg[4], 'Stomach' :val_dice.avg[5],
+                                    'Gallb': val_dice.avg[6], 'Esopha': val_dice.avg[7], 'Pancreas': val_dice.avg[8],
+                                    'Duode': val_dice.avg[9], 'Colon': val_dice.avg[10], 'Intes': val_dice.avg[11],
+                                    'Adrenal': val_dice.avg[12], 'Rectum': val_dice.avg[13], 'Bladder': val_dice.avg[14],
+                                    'LH': val_dice.avg[15], 'ROH': val_dice.avg[16],'BG': val_dice.avg[0],
+                                    'mean': torch.mean(val_dice.avg)}, epoch)
+            elif args.num_classes == 13:
+                logging.info(
+                    '\t [Dice Coef: mean=%.4f, BG=%.4f, Liver=%.4f, R_Kidney=%.4f, Spleen=%.4f, Pancreas=%.4f, Aorta=%.4f, IVC=%.4f, R_AdGland=%.4f, L_AdGland=%.4f, Esophagus=%.4f, Stomach=%.4f, Duodenum=%.4f, L_Kidney=%.4f]' %
+                    (torch.mean(val_dice.avg), val_dice.avg[0], val_dice.avg[1], val_dice.avg[2], val_dice.avg[3], val_dice.avg[4], val_dice.avg[5], val_dice.avg[6],
+                    val_dice.avg[7], val_dice.avg[8], val_dice.avg[9], val_dice.avg[10], val_dice.avg[11], val_dice.avg[12]))
+                writer.add_scalars('Val/Dice',
+                                    {'Liver': val_dice.avg[1], 'R_Kidney': val_dice.avg[2],
+                                    'Spleen': val_dice.avg[3], 'Pancreas': val_dice.avg[4], 'Aorta' :val_dice.avg[5],
+                                    'IVC': val_dice.avg[6], 'R_AdGland': val_dice.avg[7], 'L_AdGland': val_dice.avg[8],
+                                    'Esophagus': val_dice.avg[9], 'Stomach': val_dice.avg[10], 'Duodenum': val_dice.avg[11],
+                                    'L_Kidney': val_dice.avg[12], 'BG': val_dice.avg[0],
+                                    'mean': torch.mean(val_dice.avg)}, epoch)
+            
             # save best model
             if torch.mean(val_dice.avg) >= torch.mean(best_dice):
                 best_model_path = os.path.join(model_dir, 'best_model.pth')
@@ -218,11 +239,11 @@ def train(model, train_loader, val_loader, writer, args):
 def main():
     args = parse_args()
 
-    # GPU Setting
+    ### GPU Setting ###
     # single GPU
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    # GPU Parallel
+    # # GPU Parallel
     # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
     # os.environ["CUDA_VISIBLE_DEVICES"] = "2, 3"
 
@@ -238,20 +259,21 @@ def main():
 
     # dataset
     composed_transforms_tr = transforms.Compose([
-        tr.WordTrainerCrop(args.patch_size),
+        tr.LabeledClass(args.num_classes),
+        tr.TrainerCrop(args.patch_size),
         tr.CreateOnehotLabel(args.num_classes),
         tr.ToTensor()
     ])
 
     composed_transforms_ts = transforms.Compose([
-        tr.ToTensor()
+        tr.Test_ToTensor()
     ])
 
     # dataloader config
-    train_set = Word3D(nii_dir=args.data_dir, mode='train', transform=composed_transforms_tr)
+    train_set = AbdomenOrgan(nii_dir=args.data_dir, mode='train', transform=composed_transforms_tr)
     train_loader = DataLoader(train_set, batch_size=args.batch_size, shuffle=True, num_workers=4, drop_last=True,
                               pin_memory=True)
-    valid_set = Word3D(nii_dir=args.data_dir, mode='val', transform=composed_transforms_ts)
+    valid_set = AbdomenOrgan(nii_dir=args.data_dir, mode='val', transform=composed_transforms_ts)
     valid_loader = DataLoader(valid_set, batch_size=1, shuffle=False, num_workers=1, pin_memory=True)
 
     #  init model
@@ -265,7 +287,7 @@ def main():
 
     print('parameter numer:', sum([p.numel() for p in model.parameters()]))
 
-    # GPU Parallel
+    # # GPU Parallel
     # if torch.cuda.device_count() > 1:
     #     model = DataParallel(model, device_ids=args.gpu_grop)
 
@@ -292,4 +314,3 @@ def main():
 
 if __name__ == '__main__':
     main()
-

@@ -13,8 +13,8 @@ import SimpleITK as sitk
 from torchvision import transforms
 from torch.autograd import Variable
 from torch.utils.data import DataLoader
-from dataloader.WORD_dataloader3d import Word3D
-from dataloader import WORD_transforms as tr
+from dataloader.Dataloader3d import AbdomenOrgan
+from dataloader import transforms as tr
 from utils.losses import *
 from utils.evaluation_seg import *
 from datetime import datetime
@@ -33,28 +33,40 @@ torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.enabled = True
 torch.set_default_tensor_type('torch.FloatTensor')
 
-CLASS_NAME = ['Background', 'Liver', 'Spleen', 'Kidney(L)', 'Kidney(R)', 'Stomach', 'Gallbladder', 'Esophagus',
+WORD_NAME = ['Background', 'Liver', 'Spleen', 'Kidney(L)', 'Kidney(R)', 'Stomach', 'Gallbladder', 'Esophagus',
                'Pancreas', 'Duodenum', 'Colon', 'Intestine', 'Adrenal', 'Rectum', 'Bladder', 'Head of Femur(L)', 'Head of Femur(R)']
+
+FLARE_NAME = ['Background', 'Liver', 'R_Kidney', 'Spleen', 'Pancreas', 'Aorta', 'IVC', 'R_AdGland',
+               'L_AdGland', 'Esophagus', 'Stomach', 'Duodenum', 'L_Kidney']
 
 def main():
     parser = argparse.ArgumentParser()
     # dir config
-    parser.add_argument('--exp_dir', type=str, default='./exp/CoNeMOS')
-    parser.add_argument('--data_dir', type=str, default='./dataset/word3d')
+    parser.add_argument('--exp_dir', type=str, default='./exp/WORD/CoNeMOS')
+    parser.add_argument('--data_dir', type=str, default='./datasets/WORD')
     # GPU file
     parser.add_argument('-g', '--gpu', type=int, default=0)
     # test config
     parser.add_argument('--model_file', type=str, default='checkpoint/models/best_model.pth', help='Model path')
-    parser.add_argument('--dataset', type=str, default='test', help='test folder id contain images ROIs to test')
-    parser.add_argument('--patch_size', type=list, default=[128, 128, 96])
+    parser.add_argument('--dataset', type=str, default='test', help='test folder contain images to test')
+    parser.add_argument(
+        "--patch_size",
+        type=int,
+        nargs="+",
+        required=True,
+        help="WORD [128, 128, 96]; FLARE2023[128, 128, 64]"
+    )
     parser.add_argument('--save_imgs', type=bool, default=True)
     parser.add_argument('--batch_size', type=int, default=1)
     parser.add_argument('--num_classes', type=int, default=17)
+    parser.add_argument('--stride_xy', type=int, default=64)
+    parser.add_argument('--stride_z', type=int, default=64)
     parser.add_argument('--in_channel', type=int, default=1)
 
     args = parser.parse_args()
 
     os.environ['CUDA_VISIBLE_DEVICES'] = str(args.gpu)
+    
     model_file = os.path.join(args.exp_dir, args.model_file)
     output_path = os.path.join(args.exp_dir, 'test')
     if not os.path.exists(output_path):
@@ -62,10 +74,10 @@ def main():
 
     # 1. dataset
     composed_transforms_ts = transforms.Compose([
-        tr.ToTensor()
+        tr.Test_ToTensor()
     ])
 
-    db_test = Word3D(nii_dir=args.data_dir, mode='test', transform=composed_transforms_ts)
+    db_test = AbdomenOrgan(nii_dir=args.data_dir, mode=args.dataset, transform=composed_transforms_ts)
     test_loader = DataLoader(db_test, batch_size=args.batch_size, shuffle=False, num_workers=0, pin_memory=True)
 
     # 2. model
@@ -73,21 +85,15 @@ def main():
             'feature_chns': [16, 32, 64, 128],
             'trilinear': True,
             'size_condition_vector': args.num_classes - 1}
-    model = UNet3D(params).cuda()
-    
+    model = UNet3D(params)
+
     if torch.cuda.is_available():
         model = model.cuda()
     
-    # forward init(FiLM get shape)
-    im_init = torch.zeros(1, 1, 96, 128, 128).cuda()
-    en_init = torch.zeros(1, 16).cuda()
-    output_try = model(im_init, en_init)
-    
+    ### loading checkpoint ###
     print('==> Loading model file: %s' % (model_file))
-    # model_data = torch.load(model_file)
-
     checkpoint = torch.load(model_file)
-    pretrained_dict = checkpoint                 # for best model
+    pretrained_dict = checkpoint                    # for best checkpoint model
     # pretrained_dict = checkpoint['model']         # for final checkpoint model
     model_dict = model.state_dict()
     # 1. filter out unnecessary keys
@@ -97,29 +103,37 @@ def main():
     # 3. load the new state dict
     model.load_state_dict(model_dict)
 
-    val_class_dice = [[] for _ in range(17)]
-    total_asd_class = [[] for _ in range(17)]
+    val_class_dice = [[] for _ in range(args.num_classes)]
+    total_asd_class = [[] for _ in range(args.num_classes)]
     total_num = 0
     timestamp_start = datetime.now(pytz.timezone('Asia/Hong_Kong'))
 
     model.eval()
-    for batch_idx, sample in tqdm.tqdm(enumerate(test_loader),total=len(test_loader),ncols=80, leave=False):
+    for batch_idx, sample in tqdm.tqdm(enumerate(test_loader), total=len(test_loader), ncols=80, leave=False):
         
         image = Variable(sample['image'].squeeze(dim=0).squeeze(dim=0).cuda())
         target = Variable(sample['label'].cuda())
+        
         img_name = sample['img_name'][0]
-
         image_sam = sitk.ReadImage(os.path.join(args.data_dir, 'imagesTs', img_name))
         data_spacing = image_sam.GetSpacing()
 
-        pred_seg = test_single_case_Conditional(model, image, stride_xy=64, stride_z=64,
-                                    patch_size=args.patch_size, num_classes=args.num_classes, batch_size=args.batch_size)
+        pred_seg = test_single_case_Conditional(model, image, stride_xy=args.stride_xy, stride_z=args.stride_z,
+                                                patch_size=args.patch_size, num_classes=args.num_classes, batch_size=args.batch_size)
 
         gt_volumn = target.squeeze(dim=0)
-        dice_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
-                                                        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], False, 'dice')
-        assd_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
-                                                        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], False, 'assd', data_spacing)
+        if args.num_classes == 17:
+            dice_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
+                                                            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], False, 'dice')
+            assd_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
+                                                            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], False, 'assd', data_spacing)
+        elif args.num_classes == 13:
+            dice_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
+                                                            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], False, 'dice')
+            assd_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
+                                                            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], False, 'assd', data_spacing)
+        else:
+            raise ValueError(f"Unknown dataset")
         
         # Dice Score
         for i in range(len(val_class_dice)):
@@ -142,18 +156,28 @@ def main():
             sitk.WriteImage(pred_img, path0)
 
     # log dice score
-    for i in range(len(val_class_dice)):
-        print('==>WORD %s Dice Score: %s\n' % (CLASS_NAME[i], val_class_dice[i]))
+    if len(val_class_dice) == 17:
+        for i in range(len(val_class_dice)):
+            print('==>WORD %s Dice Score: %s\n' % (WORD_NAME[i], val_class_dice[i]))
+    elif len(val_class_dice) == 13:
+        for i in range(len(val_class_dice)):
+            print('==>FLARE2023 %s Dice Score: %s\n' % (FLARE_NAME[i], val_class_dice[i]))
 
 
     import csv
     with open(output_path+'/Dice_results.csv', 'a+') as result_file:
         wr = csv.writer(result_file, dialect='excel')
         wr.writerow(['Result in: ' + args.model_file])
-        for i in range(len(val_class_dice)):
-            wr.writerow([CLASS_NAME[i]])
-            for index in range(len(val_class_dice[i])):
-                wr.writerow([torch.from_numpy(np.array([val_class_dice[i][index]]))])        
+        if len(val_class_dice) == 17:
+            for i in range(len(val_class_dice)):
+                wr.writerow([WORD_NAME[i]])
+                for index in range(len(val_class_dice[i])):
+                    wr.writerow([torch.from_numpy(np.array([val_class_dice[i][index]]))])
+        elif len(val_class_dice) == 13:
+            for i in range(len(val_class_dice)):
+                wr.writerow([FLARE_NAME[i]])
+                for index in range(len(val_class_dice[i])):
+                    wr.writerow([torch.from_numpy(np.array([val_class_dice[i][index]]))])
 
 
     val_class_dice_mean = []
@@ -170,21 +194,32 @@ def main():
     for i in range(1, len(val_class_dice)):
         total_dice += val_class_dice[i]
     total_dice_mean = np.mean(total_dice)
-    total_dice_std = np.std(total_dice)  
+    # total_dice_std = np.std(total_dice)
+    total_dice_std = np.mean(val_class_dice_std[1:])
     
     total_asd = []
     for i in range(1, len(total_asd_class)):
         total_asd += total_asd_class[i]
     total_asd_mean = np.mean(total_asd)
-    total_asd_std = np.std(total_asd)
+    # total_asd_std = np.std(total_asd)
+    total_asd_std = np.mean(asd_class_std[1:])
 
-    for i in range(len(val_class_dice_mean)):
-        print('''\n==>val_{0}_dice : {1}-{2}'''.format(CLASS_NAME[i], val_class_dice_mean[i], val_class_dice_std[i]))
+    if len(val_class_dice_mean) == 17:
+        for i in range(len(val_class_dice_mean)):
+            print('''\n==>val_{0}_dice : {1}-{2}'''.format(WORD_NAME[i], val_class_dice_mean[i], val_class_dice_std[i]))
+    elif len(val_class_dice_mean) == 13:
+        for i in range(len(val_class_dice_mean)):
+            print('''\n==>val_{0}_dice : {1}-{2}'''.format(FLARE_NAME[i], val_class_dice_mean[i], val_class_dice_std[i]))
     print('''\n==>val_Average_dice : {0}-{1}'''.format(total_dice_mean, total_dice_std))
     
-    for i in range(len(asd_class_mean)):
-        print('''\n==>ave_asd_{0} : {1}-{2}'''.format(CLASS_NAME[i], asd_class_mean[i], asd_class_std[i]))
+    if len(asd_class_mean) == 17:
+        for i in range(len(asd_class_mean)):
+            print('''\n==>ave_asd_{0} : {1}-{2}'''.format(WORD_NAME[i], asd_class_mean[i], asd_class_std[i]))
+    elif len(asd_class_mean) == 13:
+        for i in range(len(asd_class_mean)):
+            print('''\n==>ave_asd_{0} : {1}-{2}'''.format(FLARE_NAME[i], asd_class_mean[i], asd_class_std[i]))
     print('''\n==>val_Average_asd : {0}-{1}'''.format(total_asd_mean, total_asd_std))
 
 if __name__ == '__main__':
     main()
+

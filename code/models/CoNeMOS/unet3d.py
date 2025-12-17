@@ -6,6 +6,7 @@ import numpy as np
 from .film import FiLM
 from torch.nn.functional import interpolate
 
+
 class ConvBlock(nn.Module):
     """
     Two 3D convolution layers with batch norm and leaky relu.
@@ -37,6 +38,7 @@ class ConvBlock(nn.Module):
         
         return x
 
+
 class DownBlock(nn.Module):
     """
     3D downsampling followed by ConvBlock
@@ -54,6 +56,7 @@ class DownBlock(nn.Module):
         x = self.conv(x, condition)
         
         return x
+
 
 class UpBlock(nn.Module):
     """

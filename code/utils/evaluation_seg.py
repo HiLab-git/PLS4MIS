@@ -38,7 +38,6 @@ def binary_dice(s, g, resize=False):
     dice = (2.0 * s0 + 1e-5) / (s1 + s2 + 1e-5)
     return dice
 
-
 def binary_iou(s, g):
     """
     Calculate the IoU score of two N-d volumes for binary segmentation.
@@ -53,7 +52,6 @@ def binary_iou(s, g):
     union = np.asarray(s + g > 0, np.float32)
     iou = (intersecion.sum() + 1e-5) / (union.sum() + 1e-5)
     return iou
-
 
 # Hausdorff and ASSD evaluation
 def get_edge_points(img):
@@ -71,7 +69,6 @@ def get_edge_points(img):
     ero = ndimage.binary_erosion(img, strt)
     edge = np.asarray(img, np.uint8) - np.asarray(ero, np.uint8)
     return edge
-
 
 def binary_hd95(s, g, spacing=None):
     """
@@ -106,7 +103,6 @@ def binary_hd95(s, g, spacing=None):
         dist_list2.append(dist_list2[len(dist_list2) - 1])
     dist2 = dist_list2[int(len(dist_list2) * 0.95)]
     return max(dist1, dist2)
-
 
 def binary_assd(s, g, spacing=None):
     """

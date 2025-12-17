@@ -70,4 +70,3 @@ class MeanDiceLoss(nn.Module):
         # Default is mean reduction
         else:
             return loss.mean()
-

@@ -1,5 +1,5 @@
 """
-PIPO-FAN training
+DoDNet training for WORD Dataset
 """
 import argparse
 import logging
@@ -19,14 +19,14 @@ from dataloader.Dataloader3d import AbdomenOrgan
 from torchvision.utils import make_grid
 from torch.utils.data import DataLoader
 from torch.autograd import Variable
-from models.PIPO_FAN.concave_dps_w import ResUNet
-from models.PIPO_FAN.TAL import TAL_CE_Loss
+from models.DoDNet.unet3D_DynConv882 import UNet3D
+from models.DoDNet import loss
 from models.weight_init import initialize_weights
 from dataloader import transforms as tr
 from utils.average_meter import AverageMeter
 from utils.evaluation_seg import *
 from utils.losses import *
-from utils.val3D import test_single_case
+from utils.val3D import test_single_case_Conditional
 from tensorboardX import SummaryWriter
 
 # -------------------- reproduction ------------------------ #
@@ -44,12 +44,12 @@ torch.backends.cudnn.enabled = True
 torch.set_default_tensor_type('torch.FloatTensor')
 
 def parse_args():
-    desc = "Pytorch implementation of PIPO_FAN"
+    desc = "Pytorch implementation of DoDNet for WORD Dataset"
     parser = argparse.ArgumentParser(description=desc)
     # dir config
-    parser.add_argument('--exp_dir', type=str, default='./exp/WORD/PIPO_FAN')
+    parser.add_argument('--exp_dir', type=str, default='./exp/WORD/DoDNet')
     parser.add_argument('--data_dir', type=str, default='./datasets/WORD')
-    parser.add_argument('--workspace', type=str, default='./exp/WORD/PIPO_FAN/checkpoint')
+    parser.add_argument('--workspace', type=str, default='./exp/WORD/DoDNet/checkpoint')
     # GPU config
     parser.add_argument('--gpu', type=str, default='0')
     parser.add_argument('--gpu_grop', type=int, default=[0, 1])
@@ -74,9 +74,10 @@ def parse_args():
     parser.add_argument('--print_interval', type=int, default=1)
     parser.add_argument('--val_interval', type=int, default=2)
     parser.add_argument('--save_interval', type=int, default=25)
+    # Other Parameter
+    parser.add_argument("--weight_std", type=bool, default=True)
 
     return parser.parse_args()
-
 
 def validate_slice(model, dataloader, args, writer, epoch):
     training = model.training
@@ -84,24 +85,18 @@ def validate_slice(model, dataloader, args, writer, epoch):
     val_dice = AverageMeter()
     with torch.no_grad():
         for sample in tqdm.tqdm(dataloader, total=len(dataloader), ncols=80, leave=False):
-
+            
             image = Variable(sample['image'].squeeze(dim=0).squeeze(dim=0).cuda())
             target = sample['label'].cuda()
             target = Variable(target)
 
-            pred_seg = test_single_case(model, image, stride_xy=args.patch_size[0], stride_z=args.patch_size[2],
-                                        patch_size=args.patch_size, num_classes=args.num_classes)
+            pred_seg = test_single_case_Conditional(model, image, stride_xy=args.patch_size[0], stride_z=args.patch_size[2],
+                                                    patch_size=args.patch_size, num_classes=args.num_classes, batch_size=args.batch_size)
 
             gt_volumn = target.squeeze(dim=0)
             
-            if args.num_classes == 17:
-                dice_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
+            dice_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
                                                             [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16], False, 'dice')
-            elif args.num_classes == 13:
-                dice_score = get_multi_class_evaluation_score(pred_seg, gt_volumn.cpu().numpy(),
-                                                            [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12], False, 'dice')
-            else:
-                raise ValueError(f"Unknown dataset")
             
             val_dice.update(torch.tensor(dice_score))
 
@@ -130,16 +125,17 @@ def validate_slice(model, dataloader, args, writer, epoch):
 
 def train(model, train_loader, val_loader, writer, args):
     # define the criterion
-    criterion = TAL_CE_Loss(num_classes=args.num_classes)
+    loss_seg_DICE = loss.DiceLoss4MOTS(num_classes=1).cuda()
+    loss_seg_CE = loss.CELoss4MOTS(num_classes=1, ignore_index=255).cuda()
 
-    # define the optimizer
-    optimizer = optim.Adam(model.parameters(), betas=(0.9, 0.99), lr=args.learning_rate)
+    # define the optimizernum
+    optimizer=torch.optim.SGD(model.parameters(), lr=args.learning_rate, momentum=0.99, nesterov=True)
     scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='max', factor=0.95, patience=4, verbose=True,
                                                      min_lr=1e-4)
     
     best_dice = torch.zeros(args.num_classes)
     best_epoch = 1
-
+    
     for epoch in range(args.start_epoch, args.epoches):
         seg_loss_epoch = AverageMeter()
 
@@ -148,23 +144,46 @@ def train(model, train_loader, val_loader, writer, args):
                 enumerate(train_loader), total=len(train_loader),
                 desc='Train epoch=%d' % epoch, ncols=80, leave=False):
             model.train()
-
+            
             image = sample['image'].cuda()
-            label = sample['onehot_label'].cuda()
-            cur_task = sample['cur_task'].cuda()
-
-            seg_pred = model(image)
-
+            one_hot_lab = sample['onehot_label'].cuda()
+            cur_task_batch = sample['cur_task'].cuda()
+            cur_task = [
+                    torch.nonzero(cur_task_batch[b], as_tuple=False).squeeze(1)
+                    for b in range(cur_task_batch.size(0))
+                ]
+            cur_task = torch.stack(cur_task, dim=0).permute(1, 0)
+            
+            seg_loss = 0
+            for i in range(0, cur_task.shape[0]):
+                task_encoding = cur_task[i]
+                
+                task_encoding = torch.zeros(size = (len(task_encoding), args.num_classes-1), dtype=torch.int, device="cuda")\
+                                        .scatter_(1, torch.tensor(task_encoding, dtype=torch.int64, device="cuda")[:, None], 1)
+                task_encoding = task_encoding.cuda()
+                
+                seg_pred = model(image, task_encoding)
+                
+                idx = task_encoding.argmax(1, keepdim=True).repeat(1, 1, *image.shape[2:])
+                gt = torch.gather(one_hot_lab[:, 1:], 1, idx)
+                            
+                # Compute dice
+                term_seg_Dice = loss_seg_DICE.forward(seg_pred, gt)
+                term_seg_BCE = loss_seg_CE.forward(seg_pred, gt)
+                one_class_loss = term_seg_Dice + term_seg_BCE
+                
+                # backward for this task only
+                one_class_loss.backward()
+                seg_loss += one_class_loss.detach()  # only accumulate detached scalar
+                
+                del seg_pred, task_encoding, gt, term_seg_Dice, term_seg_BCE, one_class_loss
+                torch.cuda.empty_cache()
+                 
+            optimizer.step()
             optimizer.zero_grad()
             
-            # TALoss
-            seg_loss = criterion(seg_pred, label, cur_task)
-
+            seg_loss = seg_loss / len(cur_task)
             seg_loss_epoch.update(seg_loss.cpu())
-
-            # backward the gradient
-            seg_loss.backward()
-            optimizer.step()
 
         # print training result
         logging.info(
@@ -186,33 +205,20 @@ def train(model, train_loader, val_loader, writer, args):
         
         if (epoch + 1) % args.val_interval == 0:
             val_dice = validate_slice(model, val_loader, args, writer, epoch)
-            logging.info('\n Epoch[%4d/%4d] --> Valid...' % (epoch + 1, args.epoches))
+            logging.info('\n  Epoch[%4d/%4d] --> Valid...' % (epoch + 1, args.epoches))
             
-            if args.num_classes == 17:
-                logging.info(
-                    '\t [Dice Coef: mean=%.4f, BG=%.4f, Liver=%.4f, Spleen=%.4f, LK=%.4f, RK=%.4f, Stomach=%.4f, Gallb=%.4f, Esopha=%.4f, Pancreas=%.4f, Duode=%.4f, Colon=%.4f, Intes=%.4f, Adrenal=%.4f, Rectum=%.4f, Bladder=%.4f, LH=%.4f, RH=%.4f]' %
-                    (torch.mean(val_dice.avg), val_dice.avg[0], val_dice.avg[1], val_dice.avg[2], val_dice.avg[3], val_dice.avg[4], val_dice.avg[5], val_dice.avg[6],
-                    val_dice.avg[7], val_dice.avg[8], val_dice.avg[9], val_dice.avg[10], val_dice.avg[11], val_dice.avg[12], val_dice.avg[13], val_dice.avg[14], val_dice.avg[15], val_dice.avg[16]))
-                writer.add_scalars('Val/Dice',
-                                    {'Liver': val_dice.avg[1], 'Spleen': val_dice.avg[2],
-                                    'LK': val_dice.avg[3], 'RK': val_dice.avg[4], 'Stomach' :val_dice.avg[5],
-                                    'Gallb': val_dice.avg[6], 'Esopha': val_dice.avg[7], 'Pancreas': val_dice.avg[8],
-                                    'Duode': val_dice.avg[9], 'Colon': val_dice.avg[10], 'Intes': val_dice.avg[11],
-                                    'Adrenal': val_dice.avg[12], 'Rectum': val_dice.avg[13], 'Bladder': val_dice.avg[14],
-                                    'LH': val_dice.avg[15], 'ROH': val_dice.avg[16],'BG': val_dice.avg[0],
-                                    'mean': torch.mean(val_dice.avg)}, epoch)
-            elif args.num_classes == 13:
-                logging.info(
-                    '\t [Dice Coef: mean=%.4f, BG=%.4f, Liver=%.4f, R_Kidney=%.4f, Spleen=%.4f, Pancreas=%.4f, Aorta=%.4f, IVC=%.4f, R_AdGland=%.4f, L_AdGland=%.4f, Esophagus=%.4f, Stomach=%.4f, Duodenum=%.4f, L_Kidney=%.4f]' %
-                    (torch.mean(val_dice.avg), val_dice.avg[0], val_dice.avg[1], val_dice.avg[2], val_dice.avg[3], val_dice.avg[4], val_dice.avg[5], val_dice.avg[6],
-                    val_dice.avg[7], val_dice.avg[8], val_dice.avg[9], val_dice.avg[10], val_dice.avg[11], val_dice.avg[12]))
-                writer.add_scalars('Val/Dice',
-                                    {'Liver': val_dice.avg[1], 'R_Kidney': val_dice.avg[2],
-                                    'Spleen': val_dice.avg[3], 'Pancreas': val_dice.avg[4], 'Aorta' :val_dice.avg[5],
-                                    'IVC': val_dice.avg[6], 'R_AdGland': val_dice.avg[7], 'L_AdGland': val_dice.avg[8],
-                                    'Esophagus': val_dice.avg[9], 'Stomach': val_dice.avg[10], 'Duodenum': val_dice.avg[11],
-                                    'L_Kidney': val_dice.avg[12], 'BG': val_dice.avg[0],
-                                    'mean': torch.mean(val_dice.avg)}, epoch)
+            logging.info(
+                '\t [Dice Coef: mean=%.4f, BG=%.4f, Liver=%.4f, Spleen=%.4f, LK=%.4f, RK=%.4f, Stomach=%.4f, Gallb=%.4f, Esopha=%.4f, Pancreas=%.4f, Duode=%.4f, Colon=%.4f, Intes=%.4f, Adrenal=%.4f, Rectum=%.4f, Bladder=%.4f, LH=%.4f, RH=%.4f]' %
+                (torch.mean(val_dice.avg), val_dice.avg[0], val_dice.avg[1], val_dice.avg[2], val_dice.avg[3], val_dice.avg[4], val_dice.avg[5], val_dice.avg[6],
+                 val_dice.avg[7], val_dice.avg[8], val_dice.avg[9], val_dice.avg[10], val_dice.avg[11], val_dice.avg[12], val_dice.avg[13], val_dice.avg[14], val_dice.avg[15], val_dice.avg[16]))
+            writer.add_scalars('Val/Dice',
+                                {'Liver': val_dice.avg[1], 'Spleen': val_dice.avg[2],
+                                'LK': val_dice.avg[3], 'RK': val_dice.avg[4], 'Stomach' :val_dice.avg[5],
+                                'Gallb': val_dice.avg[6], 'Esopha': val_dice.avg[7], 'Pancreas': val_dice.avg[8],
+                                'Duode': val_dice.avg[9], 'Colon': val_dice.avg[10], 'Intes': val_dice.avg[11],
+                                'Adrenal': val_dice.avg[12], 'Rectum': val_dice.avg[13], 'Bladder': val_dice.avg[14],
+                                'LH': val_dice.avg[15], 'ROH': val_dice.avg[16],'BG': val_dice.avg[0],
+                                'mean': torch.mean(val_dice.avg)}, epoch)
             
             # save best model
             if torch.mean(val_dice.avg) >= torch.mean(best_dice):
@@ -244,10 +250,10 @@ def main():
     # single GPU
     os.environ['CUDA_VISIBLE_DEVICES'] = args.gpu
 
-    # # GPU Parallel
+    # GPU Parallel
     # os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
-    # os.environ["CUDA_VISIBLE_DEVICES"] = "0, 1"
-
+    # os.environ["CUDA_VISIBLE_DEVICES"] = "2, 3"
+    
     # define logger
     os.makedirs(args.exp_dir, exist_ok=True)
     logging.basicConfig(filename=os.path.join(args.exp_dir, 'train.log'), level=logging.DEBUG,
@@ -278,7 +284,7 @@ def main():
     valid_loader = DataLoader(valid_set, batch_size=1, shuffle=False, num_workers=1, pin_memory=True)
 
     #  init model
-    model = ResUNet(args.in_channel, args.num_classes).cuda()
+    model = UNet3D(weight_std = args.weight_std, num_classes = args.num_classes).cuda()
 
     print('parameter numer:', sum([p.numel() for p in model.parameters()]))
 

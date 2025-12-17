@@ -65,10 +65,11 @@ class NoBottleneck(nn.Module):
 
 
 class unet3D(nn.Module):
-    def __init__(self, layers, weight_std = False):
+    def __init__(self, layers, weight_std = False, num_classes = 17):
         self.inplanes = 128
         self.weight_std = weight_std
         super(unet3D, self).__init__()
+        self.num_classes = num_classes - 1
 
         self.conv1 = conv3x3x3(1, 32, stride=[1, 1, 1], weight_std=self.weight_std)
 
@@ -102,7 +103,7 @@ class unet3D(nn.Module):
             nn.ReLU(inplace=in_place),
             torch.nn.AdaptiveAvgPool3d((1,1,1))
         )
-        self.controller = nn.Conv3d(256+16, 153, kernel_size=1, stride=1, padding=0)
+        self.controller = nn.Conv3d(256+self.num_classes, 153, kernel_size=1, stride=1, padding=0)
 
     def _make_layer(self, block, inplanes, planes, blocks, stride=(1, 1, 1), dilation=1, multi_grid=1):
         downsample = None
@@ -231,7 +232,7 @@ class unet3D(nn.Module):
 
         return logits
 
-def UNet3D(weight_std=False):
+def UNet3D(weight_std = False, num_classes = 17):
     print("Using DynConv 8,8,2")
-    model = unet3D([1, 2, 2, 2, 2], weight_std)
+    model = unet3D([1, 2, 2, 2, 2], weight_std, num_classes)
     return model

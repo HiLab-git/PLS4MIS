@@ -39,7 +39,7 @@ class CenterCrop(object):
         return {'image': image,
                 'label': label,
                 'img_name': sample['img_name']}
-    
+
 
 class RandomCrop(object):
     """
@@ -75,7 +75,7 @@ class RandomCrop(object):
         return {'image': image,
                 'label': label,
                 'img_name': sample['img_name']}
-    
+
 
 class RandomFlip(object):
     """
@@ -93,7 +93,7 @@ class RandomFlip(object):
         return {'image': image,
                 'label': label,
                 'img_name': sample['img_name']}
-    
+
 
 class RandomNoise(object):
     def __init__(self, mu=0, sigma=0.1):
@@ -104,11 +104,37 @@ class RandomNoise(object):
         image, label = sample['image'], sample['label']
         noise = np.clip(self.sigma * np.random.randn(image.shape[0], image.shape[1], image.shape[2]), -2*self.sigma, 2*self.sigma)
         noise = noise + self.mu
+        image = image + noise
 
         return {'image': image,
                 'label': label,
                 'img_name': sample['img_name']}
-    
+
+
+class LabeledClass(object):
+    """
+    For partially labeled segmentation:
+    Generate a fixed-length one-hot vector indicating which classes are annotated.
+    """
+    def __init__(self, num_classes: int):
+        self.num_classes = num_classes - 1  # no background(0)
+
+    def __call__(self, sample):
+        label = sample['label']
+        target_class = np.unique(label)
+        target_class = target_class[target_class != 0]  # remove background
+
+        # generate one-hot vector
+        one_hot = np.zeros(self.num_classes, dtype=np.float32)
+        one_hot[target_class - 1] = 1.0   # Note: Category IDs generally start from 1, so (-1)
+
+        return {
+            'image': sample['image'],
+            'label': label,
+            'img_name': sample['img_name'],
+            'cur_task': one_hot
+        }
+
 
 class CreateOnehotLabel(object):
     def __init__(self, num_classes):
@@ -120,34 +146,16 @@ class CreateOnehotLabel(object):
         for i in range(self.num_classes):
             onehot_label[i, :, :, :] = (label == i).astype(np.float32)
 
-        if 'cur_task' in sample:
-            return {'image': image, 'label': sample['label'], 'onehot_label': onehot_label, 'img_name': sample['img_name'], 'cur_task': sample['cur_task']}
-        else:
-            return {'image': image, 'label': sample['label'], 'onehot_label': onehot_label, 'img_name': sample['img_name']}
-
-        
-class RemainClass(object):
-    # return remain class list
-    def __init__(self, class_name):
-        self.class_name = class_name
-    
-    def __call__(self, sample):
-        label = sample['label']
-        cur_task = []
-        target_class = np.unique(label)
-        for i in target_class:
-            if i != 0:
-                cur_task.append(self.class_name[i-1])
-        
-        return {'image': sample['image'],
-                'label': label,
+        return {'image': image,
+                'label': sample['label'],
+                'onehot_label': onehot_label,
                 'img_name': sample['img_name'],
-                'cur_task': cur_task}
+                'cur_task': sample['cur_task']}
 
 
-class WordTrainerCrop(object):
+class TrainerCrop(object):
     """
-    Crop randomly the image in WORD sample
+    Crop randomly the image in Abdomen Organ sample
     Args:
     output_deep (int): Desired output deep
     """
@@ -158,25 +166,23 @@ class WordTrainerCrop(object):
     def __call__(self, sample):
         image, label = sample['image'], sample['label']
         
-        slices = []
-        
-        for dim, patch in zip(image.shape, self.patch_size[::-1]):
-            start = random.randint(0, dim - patch)
-            end = start + patch
-            slices.append(slice(start, end))
+        while True:
+            slices = []
+            for dim, patch in zip(image.shape, self.patch_size[::-1]):
+                start = random.randint(0, dim - patch)
+                end = start + patch
+                slices.append(slice(start, end))
 
-        image = image[slices[0], slices[1], slices[2]]
-        label = label[slices[0], slices[1], slices[2]]
+            cropped_image = image[slices[0], slices[1], slices[2]]
+            cropped_label = label[slices[0], slices[1], slices[2]]
+            
+            if np.max(cropped_image) != np.min(cropped_image):
+                break
 
-        if 'cur_task' in sample:
-            return {'image': image,
-                    'label': label,
-                    'img_name': sample['img_name'],
-                    'cur_task': sample['cur_task']}
-        else:
-            return {'image': image,
-                    'label': label,
-                    'img_name': sample['img_name']}
+        return {'image': cropped_image,
+                'label': cropped_label,
+                'img_name': sample['img_name'],
+                'cur_task': sample['cur_task']}
 
 
 class ToTensor(object):
@@ -191,18 +197,33 @@ class ToTensor(object):
         image = (image - np.min(image)) / (np.max(image) - np.min(image))
 
         # add channel dim
-        image = image.reshape(1, image.shape[0], image.shape[1], image.shape[2]).astype(np.float32)
+        image = image.reshape(1, image.shape[0], image.shape[1], image.shape[2])
 
         image, label = image.astype(np.float32), label.astype(np.float32)
 
-        if 'onehot_label' in sample and 'cur_task' in sample:
-            return {'img_name': sample['img_name'], 'image': torch.from_numpy(image), 'cur_task': sample['cur_task'],
-                    'label': torch.from_numpy(label), 'onehot_label': torch.from_numpy(sample['onehot_label'])}
-        elif 'onehot_label' in sample:
-            return {'img_name': sample['img_name'], 'image': torch.from_numpy(image),
-                    'label': torch.from_numpy(label), 'onehot_label': torch.from_numpy(sample['onehot_label'])}
-        elif 'cur_task' in sample:
-            return {'img_name': sample['img_name'], 'image': torch.from_numpy(image), 'cur_task': sample['cur_task'],
-                    'label': torch.from_numpy(label)}
-        else:
-            return {'img_name': sample['img_name'], 'image': torch.from_numpy(image), 'label': torch.from_numpy(label)}
+        return {'image': torch.from_numpy(image),
+                'label': torch.from_numpy(label),
+                'onehot_label': torch.from_numpy(sample['onehot_label']),
+                'cur_task': torch.from_numpy(sample['cur_task']),
+                'img_name': sample['img_name'],}
+
+
+class Test_ToTensor(object):
+    """Convert ndarrays in sample to Tensors."""
+
+    def __call__(self, sample):
+
+        image = sample['image']
+        label = sample['label']
+
+        # max and min 0-1
+        image = (image - np.min(image)) / (np.max(image) - np.min(image))
+
+        # add channel dim
+        image = image.reshape(1, image.shape[0], image.shape[1], image.shape[2])
+
+        image, label = image.astype(np.float32), label.astype(np.float32)
+
+        return {'img_name': sample['img_name'],
+                'image': torch.from_numpy(image),
+                'label': torch.from_numpy(label)}

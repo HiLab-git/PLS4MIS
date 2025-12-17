@@ -1,34 +1,9 @@
-# Copyright (C) 2013 Oskar Maier
-# 
-# This program is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 3 of the License, or
-# (at your option) any later version.
-# 
-# This program is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-# 
-# You should have received a copy of the GNU General Public License
-# along with this program.  If not, see <http://www.gnu.org/licenses/>.
-#
-# author Oskar Maier
-# version r0.1.1
-# since 2014-03-13
-# status Release
-
-# build-in modules
-
-# third-party modules
 import numpy
 from scipy.ndimage import _ni_support
 from scipy.ndimage.morphology import distance_transform_edt, binary_erosion,\
     generate_binary_structure
 from scipy.ndimage.measurements import label, find_objects
 from scipy.stats import pearsonr
-
-# own modules
 
 # code
 def dc(result, reference):
@@ -348,8 +323,8 @@ def hd(result, reference, voxelspacing=None, connectivity=1):
     hd1 = __surface_distances(result, reference, voxelspacing, connectivity).max()
     hd2 = __surface_distances(reference, result, voxelspacing, connectivity).max()
     hd = max(hd1, hd2)
+    
     return hd
-
 
 def hd95(result, reference, voxelspacing=None, connectivity=1):
     """
@@ -396,8 +371,8 @@ def hd95(result, reference, voxelspacing=None, connectivity=1):
     hd1 = __surface_distances(result, reference, voxelspacing, connectivity)
     hd2 = __surface_distances(reference, result, voxelspacing, connectivity)
     hd95 = numpy.percentile(numpy.hstack((hd1, hd2)), 95)
+    
     return hd95
-
 
 def assd(result, reference, voxelspacing=None, connectivity=1):
     """
@@ -451,6 +426,7 @@ def assd(result, reference, voxelspacing=None, connectivity=1):
     The binary images can therefore be supplied in any order.
     """
     assd = numpy.mean( (asd(result, reference, voxelspacing, connectivity), asd(reference, result, voxelspacing, connectivity)) )
+    
     return assd
 
 def asd(result, reference, voxelspacing=None, connectivity=1):
@@ -560,6 +536,7 @@ def asd(result, reference, voxelspacing=None, connectivity=1):
     """
     sds = __surface_distances(result, reference, voxelspacing, connectivity)
     asd = sds.mean()
+    
     return asd
 
 def ravd(result, reference):
@@ -772,8 +749,8 @@ def obj_assd(result, reference, voxelspacing=None, connectivity=1):
     The binary images can therefore be supplied in any order.
     """
     assd = numpy.mean( (obj_asd(result, reference, voxelspacing, connectivity), obj_asd(reference, result, voxelspacing, connectivity)) )
-    return assd
     
+    return assd
     
 def obj_asd(result, reference, voxelspacing=None, connectivity=1):
     """
@@ -915,6 +892,7 @@ def obj_asd(result, reference, voxelspacing=None, connectivity=1):
         object2 = labelmap2[window] == lid2
         sds.extend(__surface_distances(object1, object2, voxelspacing, connectivity))
     asd = numpy.mean(sds)
+    
     return asd
     
 def obj_fpr(result, reference, connectivity=1):
@@ -1026,6 +1004,7 @@ def obj_fpr(result, reference, connectivity=1):
     0.2    
     """
     _, _, _, n_obj_reference, mapping = __distinct_binary_object_correspondences(reference, result, connectivity)
+    
     return (n_obj_reference - len(mapping)) / float(n_obj_reference)
     
 def obj_tpr(result, reference, connectivity=1):
@@ -1136,6 +1115,7 @@ def obj_tpr(result, reference, connectivity=1):
     1.0    
     """
     _, _, n_obj_result, _, mapping = __distinct_binary_object_correspondences(reference, result, connectivity)
+    
     return len(mapping) / float(n_obj_result)
 
 def __distinct_binary_object_correspondences(reference, result, connectivity=1):
@@ -1234,4 +1214,5 @@ def __combine_windows(w1, w2):
     res = []
     for s1, s2 in zip(w1, w2):
         res.append(slice(min(s1.start, s2.start), max(s1.stop, s2.stop)))
+    
     return tuple(res)

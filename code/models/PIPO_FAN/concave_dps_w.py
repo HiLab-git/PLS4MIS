@@ -27,9 +27,14 @@ class ResUNet(nn.Module):
 
         self.att = attention(n_classes, 1)
 
-
-        self.gapool1 = nn.AvgPool3d(kernel_size=(96, 128, 128))
-        self.gapool2 = nn.MaxPool3d(kernel_size=(96, 128, 128))
+        if n_classes == 17:
+            self.gapool1 = nn.AvgPool3d(kernel_size=(96, 128, 128))
+            self.gapool2 = nn.MaxPool3d(kernel_size=(96, 128, 128))
+        elif n_classes == 13:
+            self.gapool1 = nn.AvgPool3d(kernel_size=(64, 128, 128))
+            self.gapool2 = nn.MaxPool3d(kernel_size=(64, 128, 128))
+        else:
+            raise ValueError(f"Unknown dataset")
 
     def forward(self, x):
         a,b,c,d = self.resnet(x)

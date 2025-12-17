@@ -55,6 +55,7 @@ def soft_dice_loss(prediction, soft_ground_truth, num_class, weight_map=None):
     # dice_loss = 1.0 - torch.mean(dice_score)
     # return dice_loss
     dice_score = torch.mean(-torch.log(dice_score))
+    
     return dice_score
 
 
@@ -85,7 +86,6 @@ def dice_loss_mute(prediction, soft_ground_truth, num_class, weight_map=None):
         ref_vol = torch.sum(ground, 0)
         intersect = torch.sum(ground * pred, 0)
         seg_vol = torch.sum(pred, 0)
-    # dice_score = (2.0 * intersect + 1e-5) / (ref_vol + seg_vol + 1e-5)
     dice_score = (2.0 * intersect) / (ref_vol + seg_vol + 1e-5)
     dice_score = 1.0 - torch.mean(dice_score)
 
@@ -141,7 +141,7 @@ def eval_dice_dq(gt_y, pred_y, detail=False):
         dice.append(dice_this)
 
     return dice
-    
+
 def Intersection_over_Union_class(prediction, soft_ground_truth, num_class):
     '''
     calculate the IoU in each class case in multi-class problem
