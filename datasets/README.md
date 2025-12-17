@@ -1,13 +1,45 @@
-# 📊 Datasets/Challenges for Partially Labeled Medical Image Segmentation
-A list of publicly available, partially labeled medical image segmentation datasets is included. Pre-processed WORD dataset versions are provided for immediate use in experiments.
+# 📊 Datasets & Challenges for Partially Labeled Medical Image Segmentation
+
+This repository provides a curated list of **publicly available datasets** for *partially labeled medical image segmentation*.  
+In particular, **pre-processed versions of the WORD dataset** are released to support immediate experimental use. The pre-processed version of the FLARE2023 dataset is still awaiting open-source approval from the organizers; stay tuned.
 
 ---
 
-## [1. WORD Dataset](WORD)
-* This dataset consists of 150 abdominal Computed Tomography (CT) volumes, divided into 100 volumes for training, 20 for validation, and 30 for testing.
-* Each CT volume contains 159–330 slices of 512 × 512 pixels, with an in-plane resolution of 0.976 mm × 0.976 mm and inter-slice spacing of 2.5-3.0 mm.
-* We used r ∈ {2∕16, 4∕16, 6∕16} to denote the ratio of labeled classes in a volume and randomly select labels for 16 × r organs in each training volume.
-* More details of this dataset can be found at [this](WORD)
+## 1️⃣ WORD Dataset
+
+📁 **Dataset Information:** [WORD](WORD)
+
+### Overview
+- The WORD dataset contains **150 abdominal CT volumes**, split into:
+  - **100** for training  
+  - **20** for validation  
+  - **30** for testing
+- Each CT volume consists of **159–330 slices** with a spatial resolution of **512 × 512 pixels**.
+- Imaging properties:
+  - In-plane resolution: **0.976 mm × 0.976 mm**
+  - Inter-slice spacing: **2.5–3.0 mm**
+- To simulate partial labeling, we define  
+  \[
+  r \in \{2/16, 4/16, 6/16\}
+  \]
+  where each training volume contains annotations for **16 × r randomly selected organs**.
+- Additional details can be found at the official [WORD dataset page](WORD).
+
+---
+
+### 📥 Dataset Download
+
+The processed **partially labeled WORD dataset** (with labeling ratios of 2/16, 4/16, and 6/16) is publicly available via the following options:
+
+1. **Baidu Disk (China)**  
+   - Link: https://pan.baidu.com/s/1wRiQGlArH6KKq2ZB03BMfw  
+   - Password: **WDPL**
+
+2. **Google Drive**  
+   - Link: https://drive.google.com/file/d/1v29xcg7SpQUTRNFcU17PXguMDa9wG9Fo/view?usp=drive_link  
+
+---
+
 
 ### Dataset folder structure
 Now, the processed partially labeled WORD dataset, with class ratios of 2∕16, 4∕16, and 6∕16, is publicly available. It can be downloaded through the following two options:
@@ -46,4 +78,4 @@ WORD dataset is stored in the `/code/datasets` folder like this:
 
 ---
 
-## [2. FLARE2023 Dataset]()
+## [2. FLARE2023 Challenge]()
