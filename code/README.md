@@ -46,3 +46,8 @@ python -u test_PLSeg.py --exp_dir ./exp/FLARE2023/PLSeg --data_dir ./datasets/FL
        --gpu 1 --patch_size 128 128 64 --batch_size 1 --num_classes 13 --stride_xy 32 --stride_z 32
 ```
 5. For more training information on the other model, please refer to `run.sh`. The original code corresponds to `train_XXXXX.py and test_XXXXX.py`.
+
+## Reimplemented methods
+
+## Acknowledgement
+* Part of the code is adapted from open-source codebases and original implementations of algorithms; we thank these author for their fantastic and efficient codebase, such as, [SSL4MIS](https://github.com/HiLab-git/SSL4MIS) and [UA-MT](https://github.com/yulequan/UA-MT). 
