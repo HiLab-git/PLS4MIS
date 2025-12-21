@@ -25,7 +25,7 @@
 
 ---
 
-## 📊 Datasets for partially labeled medical image segmentation.
+# 📊 Datasets for partially labeled medical image segmentation.
 Some information and download links of the partially labeled learning datasets can be found in this [Link](https://github.com/HiLab-git/PLS4MIS/tree/main/datasets).
 
 ---
