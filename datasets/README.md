@@ -1,4 +1,4 @@
-# 📊 1Datasets & Challenges for Partially Labeled Medical Image Segmentation
+# 📊 Datasets & Challenges for Partially Labeled Medical Image Segmentation
 
 This repository provides a curated list of **publicly available datasets** for *partially labeled medical image segmentation*.  
 In particular, **pre-processed versions of the WORD dataset** are released to support immediate experimental use. The pre-processed version of the FLARE2023 dataset is still awaiting open-source approval from the organizers; stay tuned.
