@@ -38,6 +38,7 @@ Some implementations of partially labeled learning methods can be found in this 
 ## 📖 Literature reviews of partially labeled learning approach for medical image segmentation (**PLS4MIS**)
 |Date|The First and Last Authors|Title|Code|Reference|
 |---|---|---|---|---|
+|2025-12|J. Du and T. Wang|FedRS: Federated Learning Under Reliable Supervision for Multi-Organ Segmentation With Inconsistent Labels|[Code](https://github.com/luohy812/FedRS)|[TMI2025](https://ieeexplore.ieee.org/document/11316537)|
 |2025-10|Z. Zhang and X. Duan|AMOTS: Partially supervised framework for abdominal multi-organ and tumor segmentation via aspect-aware complementary|[Code](https://github.com/zzm3zz/AMOTS)|[AIMed2025](https://www.sciencedirect.com/science/article/pii/S0933365725001599?ref=pdf_download&fr=RR-2&rr=966ba42cac9fcbae)|
 |2025-09|X. Liu and Z. Song|Deep Mutual Learning among Partially Labeled Datasets for Multi-Organ Segmentation|None|[TMI2025](https://ieeexplore.ieee.org/abstract/document/11181137)|
 |2025-09|S. Zhu and J. Hu|Visual prompt-driven universal model for medical image segmentation in radiotherapy|None|[KBS2025](https://www.sciencedirect.com/science/article/pii/S0950705125010512)|
