@@ -49,6 +49,7 @@ python -u test_PLSeg.py --exp_dir ./exp/FLARE2023/PLSeg --data_dir ./datasets/FL
 
 ## Reimplemented methods
 * [Pyramid Input Pyramid Output Feature Abstraction Network (PIPO-FAN)](https://ieeexplore.ieee.org/document/9112221) [[Train](./train_PIPO_FAN.py)/[Test](./test_PIPO_FAN.py)]
+* [Marginal and Exclusion Loss (MEL)](https://www.sciencedirect.com/science/article/pii/S1361841521000256) [[Train](./train_MEloss.py)/[Test](./test_MEloss.py)]
 
 
 ## Acknowledgement
