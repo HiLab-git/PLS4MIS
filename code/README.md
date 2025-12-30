@@ -48,7 +48,7 @@ python -u test_PLSeg.py --exp_dir ./exp/FLARE2023/PLSeg --data_dir ./datasets/FL
 5. For more training information on the other model, please refer to `run.sh`. The original code corresponds to `train_XXXXX.py and test_XXXXX.py`.
 
 ## Reimplemented methods
-* [PIPO-FAN](https://ieeexplore.ieee.org/document/9112221)[[Train](./train_PIPO_FAN.py)/[Test](./test_PIPO_FAN.py)]
+* [Pyramid Input Pyramid Output Feature Abstraction Network (PIPO-FAN)](https://ieeexplore.ieee.org/document/9112221) [[Train](./train_PIPO_FAN.py)/[Test](./test_PIPO_FAN.py)]
 
 
 ## Acknowledgement
