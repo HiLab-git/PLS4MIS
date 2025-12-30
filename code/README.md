@@ -51,7 +51,8 @@ python -u test_PLSeg.py --exp_dir ./exp/FLARE2023/PLSeg --data_dir ./datasets/FL
 * [Pyramid Input Pyramid Output Feature Abstraction Network (PIPO-FAN)](https://ieeexplore.ieee.org/document/9112221) [[Train](./train_PIPO_FAN.py)/[Test](./test_PIPO_FAN.py)]
 * [Marginal and Exclusion Loss (MEL)](https://www.sciencedirect.com/science/article/pii/S1361841521000256) [[Train](./train_MEloss.py)/[Test](./test_MEloss.py)]
 * [Label-set generalisation of the Dice loss (LeafDice)](https://link.springer.com/chapter/10.1007/978-3-030-87196-3_60) [[Train](./train_LeafDice.py)/[Test](./test_LeafDice.py)]
+* [Dynamic on-Demand Network (DoDNet)](https://openaccess.thecvf.com/content/CVPR2021/papers/Zhang_DoDNet_Learning_To_Segment_Multi-Organ_and_Tumors_From_Multiple_Partially_CVPR_2021_paper.pdf) [[Train](./train_DoDNet.py)/[Test](./test_DoDNet.py)]
 
 
 ## Acknowledgement
-* Part of the code is adapted from open-source codebases and original implementations of algorithms; we thank these author for their fantastic and efficient codebase, such as, [SSL4MIS](https://github.com/HiLab-git/SSL4MIS) and [UA-MT](https://github.com/yulequan/UA-MT). 
+* Part of the code is adapted from open-source codebases and original implementations of algorithms; we thank these author for their fantastic and efficient codebase, such as [SSL4MIS](https://github.com/HiLab-git/SSL4MIS) and [UA-MT](https://github.com/yulequan/UA-MT). 
