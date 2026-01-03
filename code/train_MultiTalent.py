@@ -1,5 +1,5 @@
 """
-MultiTalent training
+MultiTalent Simplified version (only adaptive loss is applied) training
 """
 import argparse
 import logging
