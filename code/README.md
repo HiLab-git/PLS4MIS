@@ -53,6 +53,7 @@ python -u test_PLSeg.py --exp_dir ./exp/FLARE2023/PLSeg --data_dir ./datasets/FL
 * [Label-set generalisation of the Dice loss (LeafDice)](https://link.springer.com/chapter/10.1007/978-3-030-87196-3_60) [[Train](./train_LeafDice.py)/[Test](./test_LeafDice.py)]
 * [Dynamic on-Demand Network (DoDNet)](https://openaccess.thecvf.com/content/CVPR2021/papers/Zhang_DoDNet_Learning_To_Segment_Multi-Organ_and_Tumors_From_Multiple_Partially_CVPR_2021_paper.pdf) [[Train](./train_DoDNet.py)/[Test](./test_DoDNet.py)]
 * [Conditional Network for Multi-Organ Segmentation (CoNeMOS)](https://openreview.net/forum?id=sfjgmuvLS7) [[Train](./train_CoNeMOS.py)/[Test](./test_CoNeMOS.py)]
+* [Partially Labeled Segmentation (PL-Seg)](https://www.sciencedirect.com/science/article/pii/S1361841525004311) [[Train](./train_PLSeg.py)/[Test](./test_PLSeg.py)]
 
 
 ## Acknowledgement
