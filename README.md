@@ -20,7 +20,7 @@
 
 - 📁 Focused on partially labeled supervision for **3D medical image segmentation**
 - 📚 Includes **daily-updated literature reviews**
-- 🛠️ Implements **six representative algorithms**
+- 🛠️ Implements **seven representative algorithms**
 - 🧪 Ready-to-run examples and scripts
 
 ---
