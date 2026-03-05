@@ -1,4 +1,4 @@
-# 🧠 APLS4MIS: Partially Labeled Supervision for Medical Image Segmentation
+# 🧠 PLS4MIS: Partially Labeled Supervision for Medical Image Segmentation
 
 **PLS4MIS** is an open-source toolbox for **partially labeled medical image segmentation**.
 
